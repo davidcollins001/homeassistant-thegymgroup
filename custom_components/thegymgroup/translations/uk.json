@@ -1,0 +1,47 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Account is already configured"
+        },
+        "error": {
+            "cannot_connect": "Failed to connect",
+            "invalid_auth": "Invalid authentication",
+            "too_many_requests": "Too many requests, retry later.",
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "password": "Pin",
+                    "username": "Username"
+                },
+                "description": "Enter your credentials."
+            }
+        }
+    },
+    "entity": {
+        "sensor": {
+          "chain_name": {
+            "name": "Chain Name"
+          },
+          "home_gym": {
+            "name": "Home Gym"
+          },
+          "occupancy": {
+            "name": "Occupancy"
+          },
+          "account_status": {
+            "name": "Account Status"
+          },
+          "gym_status": {
+            "name": "Gym Status"
+          },
+          "membership_type": {
+            "name": "Membership Type"
+          },
+          "last_workout_duration": {
+            "name": "Last Workout Duration"
+          }
+        }
+    }
+}
