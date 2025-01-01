@@ -257,10 +257,15 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
                 session
             )
 
+            start_date = ''
+            if self.last_sync:
+                start_date = f"startDate={df(self.last_sync)}"
+
             # sync gym visits
             gym_visit = self.fetch(
                 f"exercisers/{user_id}/check-ins/history?"
-                f"startDate={df(self.last_sync)}&endDate={df(datetime.now())}",
+                f"{start_date}&"
+                f"endDate={df(datetime.now())}",
                 session
             )
 
@@ -269,7 +274,7 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
             check_ins = visits["checkIns"]
             if check_ins:
                 _LOGGER.debug(f"Found {len(visits)} since {self.last_sync}")
-                gym_data["checkIn"] = check_ins[0]
+                gym_data["checkIns"] = check_ins
 
         self.last_sync = datetime.now()
         return gym_data

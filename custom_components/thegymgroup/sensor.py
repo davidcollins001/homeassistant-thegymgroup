@@ -1,5 +1,6 @@
 """Platform for The Gym Group integration."""
 import logging
+import datetime as dt
 import voluptuous as vol
 from numbers import Number
 from tzlocal import get_localzone
@@ -15,13 +16,18 @@ from homeassistant.const import (
     ATTR_ENTITY_ID,
     CONF_ID,
 )
-from homeassistant.const import ATTR_ATTRIBUTION, CONF_ID
+from homeassistant.const import UnitOfTime, CONF_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_platform
-from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-    DataUpdateCoordinator,
+    CoordinatorEntity, DataUpdateCoordinator,
+)
+from homeassistant.components.recorder.models import (
+    StatisticMetaData, StatisticData
+)
+from homeassistant.components.recorder.statistics import (
+    async_add_external_statistics,
+    async_import_statistics,
 )
 
 from .const import (
@@ -54,6 +60,10 @@ async def async_setup_entry(
 
     async_add_entities(entities, update_before_add=True)
 
+    coordinator.last_sync = None
+    coordinator.data = await coordinator.async_refresh_data()
+    entities[-1].hass = hass
+    await entities[-1].async_update()
 
 class GymGroupMemberSensor(CoordinatorEntity, SensorEntity):
     def __init__(self, unique_id, coordinator, description):
@@ -125,7 +135,9 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        return self.coordinator.data["checkIn"]["duration"]
+        # return self.coordinator.data["checkIn"]["duration"]
+        # TODO: assume only 1 check-in since last check
+        return self.coordinator.data["checkIns"][0]["duration"]
 
     @property
     def extra_state_attributes(self):
@@ -134,12 +146,54 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
             return {}
 
         return {
-            "check_in": self.coordinator.data["checkIn"]["duration"],
-            "location": self.coordinator.data["checkIn"]["gymLocationName"],
+            "check_in": self.coordinator.data["checkIns"][0]["checkInDate"],
+            "location": self.coordinator.data["checkIns"][0]["gymLocationName"],
             "last_synced": self.coordinator.last_sync,
         }
 
     @property
     def available(self):
         return (super().available and self.coordinator.data
-                and hasattr(self.coordinator.data, "checkIn"))
+                and "checkIns" in self.coordinator.data)
+
+    async def async_update(self):
+        await super().async_update()
+
+        if not self.enabled or not self.available:
+            return
+
+        # TODO: this should be done in config_flow.py so it's only done once
+
+        # statistic_id = f"{DOMAIN}:{self.unique_id}_{self.entity_description.key}"
+        # statistic_id = f"{DOMAIN}:{self.unique_id}"
+        # statistic_id = f"{DOMAIN}:sensor.{self.unique_id}"
+        statistic_id = f"sensor.{self.unique_id}"
+        statistics = []
+        for check_in in self.coordinator.data["checkIns"]:
+            value = check_in["duration"]
+            start = check_in["checkInDate"]
+            start = dt.datetime.fromisoformat(start).astimezone()
+            start = start.replace(minute=0, second=0, microsecond=0)
+            print(f"{start} {value}")
+            statistics.append(StatisticData(start=start,
+                                            # last_reset=start,
+                                            # mean=value,
+                                            # sum=value,
+                                            state=value
+                             ))
+            print(f">>> {start} {value}")
+
+        # async_add_external_statistics(
+        async_import_statistics(
+            self.hass,
+            StatisticMetaData(
+                has_mean=False,
+                has_sum=True,
+                name=self.name,
+                source='recorder',
+                # source=DOMAIN,
+                statistic_id=statistic_id,
+                unit_of_measurement=self.entity_description.unit_of_measurement,
+            ),
+            statistics
+        )
