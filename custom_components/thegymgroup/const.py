@@ -60,7 +60,7 @@ WORKOUT_ENTITY_LIST = (
                               path="data/checkIn.duration",
                               unit_of_measurement=UnitOfTime.MILLISECONDS,
                               icon="mdi:weight-lifter",
-                              state_class=SensorStateClass.MEASUREMENT),
+                              device_class=SensorDeviceClass.DURATION),
     # "data/checkIn.checkInDate": ["Last Check-in", None, "mdi:weight-lifter", None, None, True],
     # "data/checkIn.gymLocationName": ["Last Workout Location", None, "mdi:weight-lifter", None, None, True],
 )
