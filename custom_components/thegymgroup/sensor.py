@@ -1,27 +1,12 @@
 """Platform for The Gym Group integration."""
 import logging
-import voluptuous as vol
-from numbers import Number
-from tzlocal import get_localzone
 
-from homeassistant.components.sensor import (
-    SensorEntity,
-    SensorDeviceClass,
-    SensorStateClass,
-)
+from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    UnitOfLength,
-    ATTR_ENTITY_ID,
-    CONF_ID,
-)
-from homeassistant.const import ATTR_ATTRIBUTION, CONF_ID
+from homeassistant.const import CONF_ID
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_platform
-from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-    DataUpdateCoordinator,
+    CoordinatorEntity, DataUpdateCoordinator,
 )
 
 from .const import (
@@ -54,6 +39,8 @@ async def async_setup_entry(
 
     async_add_entities(entities, update_before_add=True)
 
+    return True
+
 
 class GymGroupMemberSensor(CoordinatorEntity, SensorEntity):
     def __init__(self, unique_id, coordinator, description):
@@ -63,19 +50,6 @@ class GymGroupMemberSensor(CoordinatorEntity, SensorEntity):
         self.entity_description = description
         self._attr_unique_id = f"{coordinator.name}_{description.key}"
         self._attr_has_entity_name = True
-
-    @property
-    def native_value(self):
-        """Return the state of the sensor."""
-        field, locs = self.entity_description.path.split('/')
-        locs = locs.split('.')
-
-        data = getattr(self.coordinator, field)
-        for loc in locs:
-            if data:
-                data = data.get(loc)
-
-        return data
 
     @property
     def native_value(self):
@@ -125,7 +99,7 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        return self.coordinator.data["checkIn"]["duration"]
+        return self.coordinator.data["checkIns"][0]["duration"]
 
     @property
     def extra_state_attributes(self):
@@ -134,12 +108,17 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
             return {}
 
         return {
-            "check_in": self.coordinator.data["checkIn"]["duration"],
-            "location": self.coordinator.data["checkIn"]["gymLocationName"],
+            "check_in": self.coordinator.data["checkIns"][0]["checkInDate"],
+            "location": self.coordinator.data["checkIns"][0]["gymLocationName"],
             "last_synced": self.coordinator.last_sync,
         }
 
     @property
     def available(self):
         return (super().available and self.coordinator.data
-                and hasattr(self.coordinator.data, "checkIn"))
+                and "checkIns" in self.coordinator.data)
+
+    @property
+    def native_unit_of_measurement(self):
+        return self.entity_description.unit_of_measurement
+
