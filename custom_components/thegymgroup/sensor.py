@@ -95,6 +95,21 @@ class GymGroupMemberSensor(CoordinatorEntity, SensorEntity):
         return super().available and self.coordinator.data
 
 
+class GymGroupGymSensor(GymGroupMemberSensor, SensorEntity):
+    @property
+    def extra_state_attributes(self):
+        """Sensor attributes"""
+        if not self.coordinator.data:
+            return {}
+
+        attributes = {
+            "location": self.coordinator.data["checkIns"][0]["gymLocationName"],
+            "last_synced": self.coordinator.last_sync
+        }
+
+        return attributes
+
+
 class GymGroupVisitSensor(GymGroupMemberSensor):
     @property
     def native_value(self):
@@ -121,4 +136,3 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
     @property
     def native_unit_of_measurement(self):
         return self.entity_description.unit_of_measurement
-
