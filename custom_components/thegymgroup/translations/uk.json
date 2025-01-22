@@ -20,6 +20,11 @@
         }
     },
     "entity": {
+        "binary_sensor": {
+          "gym_status": {
+            "name": "Gym Status"
+          }
+        },
         "sensor": {
           "chain_name": {
             "name": "Chain Name"
@@ -32,9 +37,6 @@
           },
           "account_status": {
             "name": "Account Status"
-          },
-          "gym_status": {
-            "name": "Gym Status"
           },
           "membership_type": {
             "name": "Membership Type"

@@ -90,8 +90,8 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
                f"gym-busyness?gymLocationId={gym_id}")
 
         async with aiohttp.ClientSession() as session:
-            # sync current capacity
-            gym_capacity = self.fetch(
+            # sync current occupancy
+            gym_occupancy = self.fetch(
                 f"thegymgroup/v1.0/exerciser/{user_id}/gym-busyness?"
                 f"gymLocationId={gym_id}",
                 session
@@ -109,7 +109,7 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
                 session
             )
 
-            gym_data, visits = await asyncio.gather(gym_capacity, gym_visit)
+            gym_data, visits = await asyncio.gather(gym_occupancy, gym_visit)
 
             check_ins = visits["checkIns"]
             if check_ins:

@@ -12,9 +12,11 @@ from homeassistant.helpers.update_coordinator import (
 from .const import (
     DATA_COORDINATOR,
     DOMAIN,
-    ACCOUNT_ENTITY_LIST,
-    WORKOUT_ENTITY_LIST,
+    ACCOUNT_ENTITIES,
+    WORKOUT_ENTITIES,
+    GYM_ENTITIES,
 )
+from .entity import GymGroupBaseEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,11 +31,15 @@ async def async_setup_entry(
     unique_id = entry.data[CONF_ID].split('@')[0]
 
     entities = []
-    for descr in ACCOUNT_ENTITY_LIST:
+    for descr in ACCOUNT_ENTITIES:
         _LOGGER.debug("Registering entity: %s", descr)
         entities.append(GymGroupMemberSensor(unique_id, coordinator, descr))
 
-    for descr in WORKOUT_ENTITY_LIST:
+    for descr in GYM_ENTITIES:
+        _LOGGER.debug("Registering entity: %s", descr)
+        entities.append(GymGroupGymSensor(unique_id, coordinator, descr))
+
+    for descr in WORKOUT_ENTITIES:
         _LOGGER.debug("Registering entity: %s", descr)
         entities.append(GymGroupVisitSensor(unique_id, coordinator, descr))
 
@@ -42,70 +48,24 @@ async def async_setup_entry(
     return True
 
 
-class GymGroupMemberSensor(CoordinatorEntity, SensorEntity):
-    def __init__(self, unique_id, coordinator, description):
-        super().__init__(coordinator)
-
-        self._unique_id = unique_id
-        self.entity_description = description
-        self._attr_unique_id = f"{coordinator.name}_{description.key}"
-        self._attr_has_entity_name = True
-
+class GymGroupMemberSensor(GymGroupBaseEntity, SensorEntity):
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        field, locs = self.entity_description.path.split('/')
-        locs = locs.split('.')
+        return self.get_value(self.entity_description.path)
 
-        data = getattr(self.coordinator, field)
-        for loc in locs:
-            if data:
-                data = data.get(loc)
 
-        return data
-
+class GymGroupGymSensor(GymGroupMemberSensor):
     @property
     def extra_state_attributes(self):
         """Sensor attributes"""
         if not self.coordinator.data:
             return {}
 
-        attributes = {
-            "last_synced": self.coordinator.last_sync
-        }
-
-        return attributes
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._unique_id)},
-            "name": "The Gym Group",
-            "manufacturer": "The Gym Group",
-        }
-
-    @property
-    def entity_registry_enabled_default(self):
-        """if entity should be enabled when first added to the entity registry"""
-        # return self._enabled_default
-        return True
-
-    @property
-    def available(self):
-        return super().available and self.coordinator.data
-
-
-class GymGroupGymSensor(GymGroupMemberSensor, SensorEntity):
-    @property
-    def extra_state_attributes(self):
-        """Sensor attributes"""
-        if not self.coordinator.data:
-            return {}
-
-        attributes = {
+        attributes = super().extra_state_attributes
+        attributes.update({
             "location": self.coordinator.data["checkIns"][0]["gymLocationName"],
-            "last_synced": self.coordinator.last_sync
-        }
+        })
 
         return attributes
 
@@ -122,16 +82,17 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
         if not self.coordinator.data:
             return {}
 
-        return {
+        attributes = super().extra_state_attributes
+        attributes.update({
             "check_in": self.coordinator.data["checkIns"][0]["checkInDate"],
             "location": self.coordinator.data["checkIns"][0]["gymLocationName"],
-            "last_synced": self.coordinator.last_sync,
-        }
+        })
+
+        return attributes
 
     @property
     def available(self):
-        return (super().available and self.coordinator.data
-                and "checkIns" in self.coordinator.data)
+        return (super().available and "checkIns" in self.coordinator.data)
 
     @property
     def native_unit_of_measurement(self):
