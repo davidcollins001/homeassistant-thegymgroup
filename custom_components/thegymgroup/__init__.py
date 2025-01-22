@@ -7,16 +7,15 @@ from collections.abc import Awaitable
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.const import Platform
 
 from .const import DATA_COORDINATOR, DOMAIN
 from .coordinator import TheGymGroupCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor"]
+PLATFORMS = [Platform.BINARY_SENSOR, Platform.SENSOR]
 
-# add icon
-# https://github.com/home-assistant/brands
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up The Gym Group from a config entry."""

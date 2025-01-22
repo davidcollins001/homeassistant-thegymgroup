@@ -9,6 +9,10 @@ from homeassistant.const import (
     UnitOfLength,
     PERCENTAGE,
 )
+from homeassistant.components.binary_sensor import (
+    BinarySensorEntityDescription,
+    BinarySensorDeviceClass
+)
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorStateClass,
@@ -26,7 +30,13 @@ class GymGroupEntityDescription(SensorEntityDescription):
     path: str
 
 
-ACCOUNT_ENTITY_LIST = (
+@dataclass(kw_only=True)
+class GymGroupBinaryEntityDescription(BinarySensorEntityDescription):
+    """Describes sensor entity"""
+    path: str
+
+
+ACCOUNT_ENTITIES = (
     GymGroupEntityDescription(key="chain_name",
                               translation_key="chain_name",
                               path="profile/chainName",
@@ -45,39 +55,31 @@ ACCOUNT_ENTITY_LIST = (
                               icon = "mdi:wallet-membership"),
 )
 
-GYM_ENTITY_LIST = (
+GYM_ENTITIES = (
     GymGroupEntityDescription(key="occupancy",
                               translation_key="occupancy",
                               path="data/currentCapacity",
                               icon="mdi:human-queue",
                               state_class=SensorStateClass.TOTAL),
-    GymGroupEntityDescription(key="gym_status",
-                              translation_key="gym_status",
-                              path="data/status",
-                              icon="mdi:store-clock"),
 )
 
-WORKOUT_ENTITY_LIST = (
+GYM_STATUS_ENTITIES = (
+    GymGroupBinaryEntityDescription(key="gym_status",
+                                    translation_key="gym_status",
+                                    path="data/status",
+                                    icon="mdi:store-clock",
+                                    device_class=BinarySensorDeviceClass.DOOR),
+)
+
+WORKOUT_ENTITIES = (
     GymGroupEntityDescription(key="last_workout_duration",
                               translation_key="last_workout_duration",
                               path="data/checkIn.duration",
+                              native_unit_of_measurement=UnitOfTime.MILLISECONDS,
                               unit_of_measurement=UnitOfTime.MILLISECONDS,
                               icon="mdi:weight-lifter",
+                              state_class=SensorStateClass.MEASUREMENT,
                               device_class=SensorDeviceClass.DURATION),
-    GymGroupEntityDescription(key="last_workout_duration_meas",
-                              translation_key="last_workout_duration",
-                              path="data/checkIn.duration",
-                              unit_of_measurement=UnitOfTime.MILLISECONDS,
-                              icon="mdi:weight-lifter",
-                              device_class=SensorDeviceClass.DURATION,
-                              state_class=SensorStateClass.MEASUREMENT),
-    GymGroupEntityDescription(key="last_workout_duration_acc",
-                              translation_key="last_workout_duration",
-                              path="data/checkIn.duration",
-                              unit_of_measurement=UnitOfTime.MILLISECONDS,
-                              icon="mdi:weight-lifter",
-                              device_class=SensorDeviceClass.DURATION,
-                              state_class=SensorStateClass.TOTAL_INCREASING),
     # "data/checkIn.checkInDate": ["Last Check-in", None, "mdi:weight-lifter", None, None, True],
     # "data/checkIn.gymLocationName": ["Last Workout Location", None, "mdi:weight-lifter", None, None, True],
 )
