@@ -75,11 +75,8 @@ WORKOUT_ENTITIES = (
     GymGroupEntityDescription(key="last_workout_duration",
                               translation_key="last_workout_duration",
                               path="data/checkIn.duration",
-                              native_unit_of_measurement=UnitOfTime.MILLISECONDS,
                               unit_of_measurement=UnitOfTime.MILLISECONDS,
                               icon="mdi:weight-lifter",
                               state_class=SensorStateClass.MEASUREMENT,
                               device_class=SensorDeviceClass.DURATION),
-    # "data/checkIn.checkInDate": ["Last Check-in", None, "mdi:weight-lifter", None, None, True],
-    # "data/checkIn.gymLocationName": ["Last Workout Location", None, "mdi:weight-lifter", None, None, True],
 )
