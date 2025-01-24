@@ -64,7 +64,7 @@ class GymGroupGymSensor(GymGroupMemberSensor):
 
         attributes = super().extra_state_attributes
         attributes.update({
-            "location": self.coordinator.data["checkIns"][0]["gymLocationName"],
+            "location": self.coordinator.data["gymLocationName"],
         })
 
         return attributes
@@ -74,7 +74,10 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        return self.coordinator.data["checkIns"][0]["duration"]
+        check_ins =  self.coordinator.data.get("checkIns")
+        if check_ins:
+            return check_ins[0]["duration"]
+        return 0
 
     @property
     def extra_state_attributes(self):
@@ -83,16 +86,18 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
             return {}
 
         attributes = super().extra_state_attributes
-        attributes.update({
-            "check_in": self.coordinator.data["checkIns"][0]["checkInDate"],
-            "location": self.coordinator.data["checkIns"][0]["gymLocationName"],
-        })
+        check_ins =  self.coordinator.data.get("checkIns")
+        if check_ins:
+            attributes.update({
+                "check_in": check_ins[0]["checkInDate"],
+                "location": check_ins[0]["gymLocationName"],
+            })
 
         return attributes
 
-    @property
-    def available(self):
-        return (super().available and "checkIns" in self.coordinator.data)
+    # @property
+    # def available(self):
+        # return (super().available and "checkIns" in self.coordinator.data)
 
     @property
     def native_unit_of_measurement(self):

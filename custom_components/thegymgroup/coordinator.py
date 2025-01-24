@@ -99,8 +99,7 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
 
             start_date = ''
             if self.last_sync:
-                # start_date = f"startDate={df(self.last_sync)}"
-                start_date = f"startDate=2025-01-01T00:00:00"
+                start_date = f"startDate={df(self.last_sync)}"
 
             # sync gym visits
             gym_visit = self.fetch(
@@ -112,9 +111,15 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
             gym_data, visits = await asyncio.gather(gym_occupancy, gym_visit)
 
             check_ins = visits["checkIns"]
+            # last "check in" is always shown, ignore if it's already been processed
+            # if check_ins and self.data and check_ins != self.data.get('checkIns'):
             if check_ins:
-                _LOGGER.debug(f"Found {len(visits)} since {self.last_sync}")
-                gym_data["checkIns"] = check_ins
+                last_check_in = datetime.fromisoformat(check_ins[-1]['checkInDate'])
+
+                today = datetime.now().replace(hour=0, minute=0, second=0)
+                if last_check_in > today - timedelta(days=1):
+                    _LOGGER.debug(f"Found {len(visits)} since {self.last_sync}")
+                    gym_data["checkIns"] = check_ins
 
         self.last_sync = datetime.now()
         return gym_data
