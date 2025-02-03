@@ -2,20 +2,25 @@
 import aiohttp
 import asyncio
 import logging
-from datetime import datetime, timedelta
+import datetime as dt
 
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN, DEFAULT_UPDATE_INTERVAL
+from .const import DOMAIN, DEFAULT_UPDATE_INTERVAL, EVENT_RESET
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def df(ts):
+def dt2str(ts):
     return ts.isoformat(sep="T", timespec="seconds")
+
+
+def str2dt(ts):
+    return dt.datetime.fromisoformat(ts)
 
 
 class TheGymGroupCoordinator(DataUpdateCoordinator):
@@ -47,6 +52,8 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
                                 "applicationVersionCode=38"),
         }
 
+        async_track_time_change(hass, self._async_reset, hour=23, minute=59, second=0)
+
     async def async_login(self):
         headers = {**self.headers,
                    "content-length": "56",
@@ -71,6 +78,11 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
         self.last_sync = None
 
         return True
+
+    async def _async_reset(self, *args):
+        _LOGGER.info("Resetting thegymgroup sensor {}!".format(self.name))
+        self.data.pop("checkIns", None)
+        self.hass.bus.fire(f"{self.name}_{EVENT_RESET}")
 
     async def fetch(self, url, session):
         async with session.get(f"{self.base_url}/{url}", headers=self.headers) \
@@ -99,12 +111,12 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
 
             start_date = ''
             if self.last_sync:
-                start_date = f"startDate={df(self.last_sync)}"
+                start_date = f"startDate={dt2str(self.last_sync)}"
 
             # sync gym visits
             gym_visit = self.fetch(
                 f"exercisers/{user_id}/check-ins/history?"
-                f"{start_date}&endDate={df(datetime.now())}",
+                f"{start_date}&endDate={dt2str(dt.datetime.now())}",
                 session
             )
 
@@ -112,14 +124,17 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
 
             check_ins = visits["checkIns"]
             # last "check in" is always shown, ignore if it's already been processed
-            # if check_ins and self.data and check_ins != self.data.get('checkIns'):
             if check_ins:
-                last_check_in = datetime.fromisoformat(check_ins[-1]['checkInDate'])
+                # ignore last check in time if it was before today
+                if self.last_sync:
+                    today = dt.datetime.combine(dt.date.today(), dt.time.min)
+                    check_ins = (list(filter(
+                        lambda c: str2dt(c['checkInDate']) >= today,
+                        check_ins
+                    )))
 
-                today = datetime.now().replace(hour=0, minute=0, second=0)
-                if last_check_in > today - timedelta(days=1):
-                    _LOGGER.debug(f"Found {len(visits)} since {self.last_sync}")
-                    gym_data["checkIns"] = check_ins
+                _LOGGER.debug(f"Found {len(visits)} since {self.last_sync}")
+                gym_data["checkIns"] = check_ins
 
-        self.last_sync = datetime.now()
+        self.last_sync = dt.datetime.now()
         return gym_data

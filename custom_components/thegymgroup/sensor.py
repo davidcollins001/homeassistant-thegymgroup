@@ -1,10 +1,11 @@
 """Platform for The Gym Group integration."""
 import logging
+import datetime as dt
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_ID
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, Event, callback
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity, DataUpdateCoordinator,
 )
@@ -15,6 +16,7 @@ from .const import (
     ACCOUNT_ENTITIES,
     WORKOUT_ENTITIES,
     GYM_ENTITIES,
+    EVENT_RESET,
 )
 from .entity import GymGroupBaseEntity
 
@@ -71,10 +73,31 @@ class GymGroupGymSensor(GymGroupMemberSensor):
 
 
 class GymGroupVisitSensor(GymGroupMemberSensor):
+    async def async_added_to_hass(self):
+        """Complete the initialization."""
+        await super().async_added_to_hass()
+        # register this sensor in the coordinator
+        # self.coordinator.register_entity(self.name, self.entity_id)
+
+        event_to_listen = f"{self.coordinator.name}_{EVENT_RESET}"
+        self.hass.bus.async_listen(event_to_listen,
+                                   lambda event: self._handle_reset(event))
+
+    @callback
+    def _handle_reset(self, event: Event):
+        # write the updated state
+        self.hass.add_job(self.async_write_ha_state)
+
     @property
     def native_value(self):
         """Return the state of the sensor."""
         check_ins =  self.coordinator.data.get("checkIns")
+
+        from homeassistant.components.sensor import SensorStateClass
+        if self.entity_description.state_class == SensorStateClass.TOTAL:
+            self._attr_last_reset = dt.datetime.combine(dt.date.today(),
+                                                        dt.time.min)
+
         if check_ins:
             return check_ins[0]["duration"]
         return 0

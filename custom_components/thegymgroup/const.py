@@ -22,6 +22,7 @@ from homeassistant.components.sensor import (
 DOMAIN = "thegymgroup"
 DATA_COORDINATOR = "coordinator"
 DEFAULT_UPDATE_INTERVAL = timedelta(minutes=15)
+EVENT_RESET = "reset"
 
 
 @dataclass(kw_only=True)
