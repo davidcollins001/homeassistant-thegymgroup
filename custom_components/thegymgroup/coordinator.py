@@ -89,8 +89,9 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
                 as response:
             if response.status != 200:
                 err = await response.text()
-                _LOGGER.error(f"failed for {url}: {err}")
-                raise UpdateFailed(f"failed for {url}: {err}")
+                _LOGGER.error(f"failed for {url}: {response.status}: {err}")
+                self.async_login()
+                return self.fetch(url, session)
 
             return await response.json()
 
