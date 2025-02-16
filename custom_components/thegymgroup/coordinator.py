@@ -30,11 +30,12 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
                  poll_interval=DEFAULT_UPDATE_INTERVAL):
         """Initialise a custom coordinator."""
         self.entry = entry
-        self.last_sync = None
+        self.last_sync = dt.datetime(1970, 1, 1)
 
         super().__init__(hass, _LOGGER, name=DOMAIN,
                          update_interval=poll_interval,
                          update_method=self.async_refresh_data)
+        self.data = {}
 
         self.base_url = "https://thegymgroup.netpulse.com/np"
         self.headers = {
@@ -75,7 +76,6 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
 
         self.headers["cookie"] = cookie
         self.profile = data
-        self.last_sync = None
 
         return True
 
@@ -123,19 +123,42 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
 
             gym_data, visits = await asyncio.gather(gym_occupancy, gym_visit)
 
-            check_ins = visits["checkIns"]
-            # last "check in" is always shown, ignore if it's already been processed
-            if check_ins:
-                # ignore last check in time if it was before today
-                if self.last_sync:
-                    today = dt.datetime.combine(dt.date.today(), dt.time.min)
-                    check_ins = (list(filter(
-                        lambda c: str2dt(c['checkInDate']) >= today,
-                        check_ins
-                    )))
+        # totals = self.data.get("totals", {})
+        # week_visits = totals.get("weekly",
+                                 # self.data.get("weeklyTotal", {}))
+        # month_visits = totals.get("totals",
+                                  # self.data.get("monthlyTotal", {}))
+        week_visits = self.data.get("weeklyTotal", {})
+        month_visits = self.data.get("monthlyTotal", {})
 
-                _LOGGER.debug(f"Found {len(visits)} since {self.last_sync}")
-                gym_data["checkIns"] = check_ins
+        check_ins = visits["checkIns"]
+        # last "check in" is always shown, ignore if it's already been processed
+        if check_ins:
+            # ignore last check in time if it was before today
+            today = dt.datetime.combine(dt.date.today(), dt.time.min)
+
+            check_ins = list(filter(
+                lambda c: str2dt(c['checkInDate']) >= self.last_sync,
+                check_ins
+            ))
+
+            for check_in in check_ins:
+                d = str2dt(check_in['checkInDate'])
+                if d < self.last_sync:
+                    break
+
+                cal = d.isocalendar()
+                wk_ndx = (cal.year, cal.week)
+                yr_ndx = (d.year, d.month)
+                duration = check_in['duration']/1000/60
+                week_visits[wk_ndx] = week_visits.get(wk_ndx, 0) + duration
+                month_visits[yr_ndx] = month_visits.get(yr_ndx, 0) + duration
+
+            _LOGGER.debug(f"Found {len(visits)} since {self.last_sync}")
+
+        gym_data["checkIns"] = check_ins
+        gym_data["weeklyTotal"] = week_visits
+        gym_data["monthlyTotal"] = month_visits
 
         self.last_sync = dt.datetime.now()
         return gym_data

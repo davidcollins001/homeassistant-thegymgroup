@@ -43,6 +43,12 @@
           },
           "last_workout_duration": {
             "name": "Last Workout Duration"
+          },
+          "workout_duration_this_week": {
+            "name": "Workout Duration This Week"
+          },
+          "workout_duration_this_month": {
+            "name": "Workout Duration This Month"
           }
         }
     }

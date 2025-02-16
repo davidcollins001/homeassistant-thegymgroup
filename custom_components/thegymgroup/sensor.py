@@ -93,13 +93,25 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
         """Return the state of the sensor."""
         check_ins =  self.coordinator.data.get("checkIns")
 
-        from homeassistant.components.sensor import SensorStateClass
-        if self.entity_description.state_class == SensorStateClass.TOTAL:
-            self._attr_last_reset = dt.datetime.combine(dt.date.today(),
-                                                        dt.time.min)
+        path = self.entity_description.path
+        if path == "data/checkIns.duration":
+            if check_ins:
+                return check_ins[0]["duration"]
 
-        if check_ins:
-            return check_ins[0]["duration"]
+        elif path == "data/weeklyTotal/thisWeek":
+            cal = dt.date.today().isocalendar()
+            ndx = cal.year, cal.week
+            totals = self.coordinator.data.get("weeklyTotal")
+            if totals:
+                return totals[ndx]
+
+        elif path == "data/monthlyTotal/thisMonth":
+            today = dt.date.today()
+            ndx = today.year, today.month
+            totals = self.coordinator.data.get("monthlyTotal")
+            if totals:
+                return totals[ndx]
+
         return 0
 
     @property

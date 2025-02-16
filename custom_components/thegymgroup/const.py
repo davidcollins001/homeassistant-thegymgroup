@@ -75,9 +75,29 @@ GYM_STATUS_ENTITIES = (
 WORKOUT_ENTITIES = (
     GymGroupEntityDescription(key="last_workout_duration",
                               translation_key="last_workout_duration",
-                              path="data/checkIn.duration",
+                              path="data/checkIns.duration",
                               unit_of_measurement=UnitOfTime.MILLISECONDS,
                               icon="mdi:weight-lifter",
                               state_class=SensorStateClass.MEASUREMENT,
-                              device_class=SensorDeviceClass.DURATION),
+                              # device_class=SensorDeviceClass.DURATION),
+                             ),
+
+    GymGroupEntityDescription(key="workout_duration_this_week",
+                              translation_key="workout_duration_this_week",
+                              path="data/weeklyTotal/thisWeek",
+                              unit_of_measurement=UnitOfTime.MINUTES,
+                              icon="mdi:weight-lifter",
+                              state_class=SensorStateClass.MEASUREMENT,
+                              # device_class=SensorDeviceClass.DURATION),
+                             ),
+
+    GymGroupEntityDescription(key="workout_duration_this_month",
+                              translation_key="workout_duration_this_month",
+                              path="data/monthlyTotal/thisMonth",
+                              unit_of_measurement=UnitOfTime.MINUTES,
+                              icon="mdi:weight-lifter",
+                              state_class=SensorStateClass.MEASUREMENT,
+                              # device_class=SensorDeviceClass.DURATION),
+                             ),
+
 )
