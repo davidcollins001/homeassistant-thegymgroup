@@ -96,7 +96,10 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
         path = self.entity_description.path
         if path == "data/checkIns.duration":
             if check_ins:
-                return check_ins[0]["duration"]
+                # get value for today
+                today = dt.datetime.combine(dt.date.today(), dt.time.min)
+                if check_ins[0]['checkInDate'] > today:
+                    return check_ins[0]["duration"]
 
         elif path == "data/weeklyTotal/thisWeek":
             cal = dt.date.today().isocalendar()

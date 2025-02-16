@@ -23,6 +23,11 @@ def str2dt(ts):
     return dt.datetime.fromisoformat(ts)
 
 
+def set_dt(c):
+    c['checkInDate'] = str2dt(c['checkInDate'])
+    return c
+
+
 class TheGymGroupCoordinator(DataUpdateCoordinator):
     """Coordinator is responsible for querying the device at a specified route."""
 
@@ -137,19 +142,17 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
             # ignore last check in time if it was before today
             today = dt.datetime.combine(dt.date.today(), dt.time.min)
 
-            check_ins = list(filter(
-                lambda c: str2dt(c['checkInDate']) >= self.last_sync,
-                check_ins
-            ))
+            check_ins = list(filter(lambda c: c['checkInDate'] >= self.last_sync,
+                                    map(set_dt, check_ins)))
 
             for check_in in check_ins:
-                d = str2dt(check_in['checkInDate'])
-                if d < self.last_sync:
+                check_in_date = check_in['checkInDate']
+                if check_in_date < self.last_sync:
                     break
 
-                cal = d.isocalendar()
+                cal = check_in_date.isocalendar()
                 wk_ndx = (cal.year, cal.week)
-                yr_ndx = (d.year, d.month)
+                yr_ndx = (check_in_date.year, check_in_date.month)
                 duration = check_in['duration']/1000/60
                 week_visits[wk_ndx] = week_visits.get(wk_ndx, 0) + duration
                 month_visits[yr_ndx] = month_visits.get(yr_ndx, 0) + duration
