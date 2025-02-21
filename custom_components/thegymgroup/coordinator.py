@@ -59,7 +59,7 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
                                 "applicationVersionCode=38"),
         }
 
-        async_track_time_change(hass, self._async_reset, hour=23, minute=59, second=0)
+        async_track_time_change(hass, self._async_reset, hour=23, minute=58, second=0)
 
     async def async_login(self):
         headers = {**self.headers,
