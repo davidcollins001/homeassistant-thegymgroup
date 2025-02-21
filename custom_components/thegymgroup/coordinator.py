@@ -25,6 +25,7 @@ def str2dt(ts):
 
 def set_dt(c):
     c['checkInDate'] = str2dt(c['checkInDate'])
+    c['duration'] = c['duration'] / 1000 / 60
     return c
 
 
@@ -140,9 +141,9 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
         # last "check in" is always shown, ignore if it's already been processed
         if check_ins:
             # ignore last check in time if it was before today
-            today = dt.datetime.combine(dt.date.today(), dt.time.min)
+            today = dt.datetime.combine(self.last_sync.date(), dt.time.min)
 
-            check_ins = list(filter(lambda c: c['checkInDate'] >= self.last_sync,
+            check_ins = list(filter(lambda c: c['checkInDate'] >= today,
                                     map(set_dt, check_ins)))
 
             for check_in in check_ins:
@@ -153,7 +154,7 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
                 cal = check_in_date.isocalendar()
                 wk_ndx = (cal.year, cal.week)
                 yr_ndx = (check_in_date.year, check_in_date.month)
-                duration = check_in['duration']/1000/60
+                duration = check_in['duration']
                 week_visits[wk_ndx] = week_visits.get(wk_ndx, 0) + duration
                 month_visits[yr_ndx] = month_visits.get(yr_ndx, 0) + duration
 
