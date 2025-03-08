@@ -106,14 +106,14 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
             ndx = cal.year, cal.week
             totals = self.coordinator.data.get("weeklyTotal")
             if totals:
-                return totals[ndx]
+                return totals.get(ndx, 0)
 
         elif path == "data/monthlyTotal/thisMonth":
             today = dt.date.today()
             ndx = today.year, today.month
             totals = self.coordinator.data.get("monthlyTotal")
             if totals:
-                return totals[ndx]
+                return totals.get(ndx, 0)
 
         return 0
 
