@@ -84,7 +84,7 @@ WORKOUT_ENTITIES = (
 
     GymGroupEntityDescription(key="workout_duration_this_week",
                               translation_key="workout_duration_this_week",
-                              path="data/weeklyTotal/thisWeek",
+                              path="weeklyTotal",
                               unit_of_measurement=UnitOfTime.MINUTES,
                               icon="mdi:weight-lifter",
                               state_class=SensorStateClass.MEASUREMENT,
@@ -93,7 +93,7 @@ WORKOUT_ENTITIES = (
 
     GymGroupEntityDescription(key="workout_duration_this_month",
                               translation_key="workout_duration_this_month",
-                              path="data/monthlyTotal/thisMonth",
+                              path="monthlyTotal",
                               unit_of_measurement=UnitOfTime.MINUTES,
                               icon="mdi:weight-lifter",
                               state_class=SensorStateClass.MEASUREMENT,
@@ -102,7 +102,7 @@ WORKOUT_ENTITIES = (
 
     GymGroupEntityDescription(key="workout_duration_this_year",
                               translation_key="workout_duration_this_year",
-                              path="data/yearlyTotal/thisYear",
+                              path="yearlyTotal",
                               unit_of_measurement=UnitOfTime.MINUTES,
                               icon="mdi:weight-lifter",
                               state_class=SensorStateClass.MEASUREMENT,
@@ -110,14 +110,14 @@ WORKOUT_ENTITIES = (
 
     GymGroupEntityDescription(key="workout_visits_this_month",
                               translation_key="workout_visits_this_month",
-                              path="data/monthlyVisitCount",
+                              path="monthlyVisitCount",
                               icon="mdi:weight-lifter",
                               state_class=SensorStateClass.MEASUREMENT,
                              ),
 
     GymGroupEntityDescription(key="workout_visits_this_year",
                               translation_key="workout_visits_this_year",
-                              path="data/yearlyVisitCount",
+                              path="yearlyVisitCount",
                               icon="mdi:weight-lifter",
                               state_class=SensorStateClass.MEASUREMENT,
                              ),
