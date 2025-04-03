@@ -21,6 +21,9 @@
     },
     "entity": {
         "binary_sensor": {
+          "gym_presence": {
+            "name": "Gym Presence"
+          },
           "gym_status": {
             "name": "Gym Status"
           }
