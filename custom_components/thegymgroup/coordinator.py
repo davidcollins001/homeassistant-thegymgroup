@@ -1,4 +1,4 @@
-"""Owlet integration coordinator class."""
+import time
 import aiohttp
 import asyncio
 import logging
@@ -16,15 +16,14 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def dt2str(ts):
-    return ts.isoformat(sep="T", timespec="seconds")
-
-
-def str2dt(ts):
-    return dt.datetime.fromisoformat(ts)
+    # return ts.isoformat(sep="T", timespec="seconds")
+    return ts.strftime("%Y-%m-%dT%H:%M:%S")
 
 
 def set_dt(c):
-    c['checkInDate'] = str2dt(c['checkInDate'])
+    # add 1 hour for daylight savings
+    c['checkInDate'] = dt.datetime.fromisoformat(c['checkInDate']) \
+        + dt.timedelta(hours=time.localtime().tm_isdst)
     c['duration'] = c['duration'] / 1000 / 60
     return c
 
@@ -37,7 +36,8 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
         """Initialise a custom coordinator."""
         self.entry = entry
         self.last_sync = dt.datetime(1970, 1, 1)
-        self.last_checkin = dt.datetime(1970, 1, 1)
+        self.last_updated = dt.datetime(1970, 1, 1)
+        self.last_check_in = dt.datetime(1970, 1, 1)
 
         super().__init__(hass, _LOGGER, name=DOMAIN,
                          update_interval=poll_interval,
@@ -60,7 +60,7 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
                                 "applicationVersionCode=38"),
         }
 
-        async_track_time_change(hass, self._async_reset, hour=23, minute=58, second=0)
+        # async_track_time_change(hass, self._async_reset, hour=23, minute=58, second=0)
 
     async def async_login(self):
         headers = {**self.headers,
@@ -130,10 +130,11 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
 
             gym_data, visits = await asyncio.gather(gym_occupancy, gym_visit)
 
-        return self.build_visit_data(gym_data, visits)
+        sync_dt = dt.datetime.now(dt.timezone.utc)
+        return self.build_visit_data(sync_dt, gym_data, visits)
 
-    def build_visit_data(self, gym_data, visits):
-        sync_dt = dt.datetime.now()
+    def build_visit_data(self, sync_dt, gym_data, visits):
+        last_updated = self.last_updated
 
         # totals = self.data.get("totals", {})
         # week_visits = totals.get("weekly",
@@ -149,32 +150,38 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
         check_ins = visits.get("checkIns")
         # last "check in" is always shown, ignore if it's already been processed
         today = dt.datetime.combine(self.last_sync.date(), dt.time.min)
-        last_checkin = max(today, self.last_checkin)
+        # check in will be after sync time
+        last_check_in = max(today, self.last_check_in)
         todays_check_ins = list(filter(lambda c: c['checkInDate'] > today,
                                 map(set_dt, check_ins)))
         # check in date and duration = 0.0 means person is in the gym
-        unseen_check_ins = list(filter(
-            lambda c: c['checkInDate'] > last_checkin and c['duration'] > 0,
-            todays_check_ins
-        ))
+        unseen_check_ins = list(filter(lambda c: c['checkInDate'] > last_check_in,
+                                       todays_check_ins))
 
+        gym_presence = "off"
         for check_in in unseen_check_ins:
-            check_in_date = check_in['checkInDate']
-            self.last_checkin = check_in_date
-
-            cal = check_in_date.isocalendar()
-            wk_ndx = (cal.year, cal.week)
-            mnth_ndx = (check_in_date.year, check_in_date.month)
-            yr_ndx = check_in_date.year
             duration = check_in['duration']
-            week_visits[wk_ndx] = week_visits.get(wk_ndx, 0) + duration
-            month_visits[mnth_ndx] = month_visits.get(mnth_ndx, 0) + duration
-            year_visits[yr_ndx] = year_visits.get(yr_ndx, 0) + duration
-            month_visit_count[mnth_ndx] = month_visit_count.get(mnth_ndx, 0) + 1
-            year_visit_count[yr_ndx] = year_visit_count.get(yr_ndx, 0) + 1
+            check_in_date = check_in['checkInDate']
+            self.last_check_in = check_in_date
+            last_updated = sync_dt
+
+            if duration > 0:
+                gym_presence = "off"
+                cal = check_in_date.isocalendar()
+                wk_ndx = (cal.year, cal.week)
+                mnth_ndx = (check_in_date.year, check_in_date.month)
+                yr_ndx = check_in_date.year
+                week_visits[wk_ndx] = week_visits.get(wk_ndx, 0) + duration
+                month_visits[mnth_ndx] = month_visits.get(mnth_ndx, 0) + duration
+                year_visits[yr_ndx] = year_visits.get(yr_ndx, 0) + duration
+                month_visit_count[mnth_ndx] = month_visit_count.get(mnth_ndx, 0) + 1
+                year_visit_count[yr_ndx] = year_visit_count.get(yr_ndx, 0) + 1
+            else:
+                gym_presence = "on"
 
         _LOGGER.debug(f"Found {len(visits)} since {self.last_sync}")
 
+        gym_data["gymPresence"] = gym_presence
         gym_data["checkIns"] = todays_check_ins
         gym_data["weeklyTotal"] = week_visits
         gym_data["monthlyTotal"] = month_visits
@@ -183,4 +190,5 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
         gym_data["yearlyVisitCount"] = year_visit_count
 
         self.last_sync = sync_dt
+        self.last_updated = last_updated
         return gym_data

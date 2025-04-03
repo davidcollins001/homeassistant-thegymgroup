@@ -31,7 +31,8 @@ class GymGroupBaseEntity(CoordinatorEntity):
             return {}
 
         attributes = {
-            "last_synced": self.coordinator.last_sync
+            "last_synced": self.coordinator.last_sync,
+            "last_updated": self.coordinator.last_updated,
         }
 
         return attributes
