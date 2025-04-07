@@ -143,6 +143,7 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
                                   # self.data.get("monthlyTotal", {}))
         new_check_ins = visits.get("checkIns")
         check_ins = self.data.get("checkIns", [])
+        gym_presence = self.data.get("gymPresence", "off")
         week_visits = self.data.get("weeklyTotal", {})
         month_visits = self.data.get("monthlyTotal", {})
         year_visits = self.data.get("yearlyTotal", {})
@@ -155,31 +156,30 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
         last_check_in = max(today, self.last_check_in)
         todays_check_ins = list(filter(lambda c: c['checkInDate'] > today,
                                 map(set_dt, new_check_ins)))
-        # check in date and duration = 0.0 means person is in the gym
-        unseen_check_ins = list(filter(lambda c: c['checkInDate'] > last_check_in,
-                                       todays_check_ins))
-        check_ins = list(unseen_check_ins) + check_ins
 
-        gym_presence = "off"
-        for check_in in unseen_check_ins:
-            duration = check_in['duration']
-            check_in_date = check_in['checkInDate']
-            self.last_check_in = check_in_date
-            last_updated = sync_dt
+        # for check_in in unseen_check_ins:
+        for check_in in todays_check_ins:
+            # an unseen check in
+            if check_in not in check_ins:
+                duration = check_in['duration']
+                check_in_date = check_in['checkInDate']
+                self.last_check_in = check_in_date
+                check_ins = [check_in] + check_ins
+                last_updated = sync_dt
 
-            if duration > 0:
-                gym_presence = "off"
-                cal = check_in_date.isocalendar()
-                wk_ndx = (cal.year, cal.week)
-                mnth_ndx = (check_in_date.year, check_in_date.month)
-                yr_ndx = check_in_date.year
-                week_visits[wk_ndx] = week_visits.get(wk_ndx, 0) + duration
-                month_visits[mnth_ndx] = month_visits.get(mnth_ndx, 0) + duration
-                year_visits[yr_ndx] = year_visits.get(yr_ndx, 0) + duration
-                month_visit_count[mnth_ndx] = month_visit_count.get(mnth_ndx, 0) + 1
-                year_visit_count[yr_ndx] = year_visit_count.get(yr_ndx, 0) + 1
-            else:
-                gym_presence = "on"
+                if duration > 0:
+                    gym_presence = "off"
+                    cal = check_in_date.isocalendar()
+                    wk_ndx = (cal.year, cal.week)
+                    mnth_ndx = (check_in_date.year, check_in_date.month)
+                    yr_ndx = check_in_date.year
+                    week_visits[wk_ndx] = week_visits.get(wk_ndx, 0) + duration
+                    month_visits[mnth_ndx] = month_visits.get(mnth_ndx, 0) + duration
+                    year_visits[yr_ndx] = year_visits.get(yr_ndx, 0) + duration
+                    month_visit_count[mnth_ndx] = month_visit_count.get(mnth_ndx, 0) + 1
+                    year_visit_count[yr_ndx] = year_visit_count.get(yr_ndx, 0) + 1
+                else:
+                    gym_presence = "on"
 
         _LOGGER.debug(f"Found {len(visits)} since {self.last_sync}")
 
