@@ -2,6 +2,7 @@ import time
 import aiohttp
 import asyncio
 import logging
+import operator as op
 import datetime as dt
 
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
@@ -154,8 +155,10 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
         today = dt.datetime.combine(self.last_sync.date(), dt.time.min)
         # check in will be after sync time
         last_check_in = max(today, self.last_check_in)
-        todays_check_ins = list(filter(lambda c: c['checkInDate'] > today,
-                                map(set_dt, new_check_ins)))
+        todays_check_ins = sorted(filter(lambda c: c['checkInDate'] > today,
+                                         map(set_dt, new_check_ins)),
+                                  key=op.itemgetter('checkInDate'),
+                                  reverse=False)
 
         # for check_in in unseen_check_ins:
         for check_in in todays_check_ins:
@@ -164,7 +167,7 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
                 duration = check_in['duration']
                 check_in_date = check_in['checkInDate']
                 self.last_check_in = check_in_date
-                check_ins = [check_in] + check_ins
+                check_ins = check_ins + [check_in]
                 last_updated = sync_dt
 
                 if duration > 0:
