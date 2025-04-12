@@ -95,25 +95,25 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
         check_ins =  self.coordinator.data.get("checkIns")
         today = dt.datetime.combine(dt.date.today(), dt.time.min)
 
-        ndx = None
         path = self.entity_description.path
-        if path == "data/checkIns.duration":
+        index = self.entity_description.index
+        if path == "checkIns.duration":
             # get last check in value
             if check_ins:
-                return check_ins[CHECK_IN_NDX]["duration"]
+                return check_ins[index]["duration"]
 
-        elif path == "weeklyTotal":
-            cal = dt.date.today().isocalendar()
-            ndx = today.year, cal.week
-
-        elif path in ["monthlyTotal", "monthlyVisitCount"]:
-            ndx = today.year, today.month
-
-        elif path in ["yearlyTotal", "yearlyVisitCount"]:
-            ndx = today.year
-
-        totals = self.coordinator.data.get(path, {})
-        return totals.get(ndx, CHECK_IN_NDX)
+        else:
+            duration_indexes = {
+                "weeklyTotal": (today.year,
+                                dt.date.today().isocalendar().week + index),
+                "monthlyTotal": (today.year, today.month + index),
+                "monthlyVisitCount": (today.year, today.month + index),
+                "yearlyTotal": (today.year + index),
+                "yearlyVisitCount": (today.year + index),
+            }
+            index = duration_indexes[path]
+            totals = self.coordinator.data.get(path, [None])
+            return totals[index]
 
     @property
     def extra_state_attributes(self):

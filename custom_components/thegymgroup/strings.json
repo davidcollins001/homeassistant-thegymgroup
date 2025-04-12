@@ -50,17 +50,32 @@
           "workout_duration_this_week": {
             "name": "Workout Duration This Week"
           },
+          "workout_duration_last_week": {
+            "name": "Workout Duration Last Week"
+          },
           "workout_duration_this_month": {
             "name": "Workout Duration This Month"
+          },
+          "workout_duration_last_month": {
+            "name": "Workout Duration Last Month"
           },
           "workout_duration_this_year": {
             "name": "Workout Duration This Year"
           },
+          "workout_duration_last_year": {
+            "name": "Workout Duration Last Year"
+          },
           "workout_visits_this_month": {
             "name": "Workout Visits This Month"
           },
+          "workout_visits_last_month": {
+            "name": "Workout Visits Last Month"
+          },
           "workout_visits_this_year": {
             "name": "Workout Visits This Year"
+          },
+          "workout_visits_last_year": {
+            "name": "Workout Visits Last Year"
           }
         }
     }

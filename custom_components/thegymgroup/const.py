@@ -29,6 +29,7 @@ EVENT_RESET = "reset"
 class GymGroupEntityDescription(SensorEntityDescription):
     """Describes sensor entity"""
     path: str
+    index: int = None
 
 
 @dataclass(kw_only=True)
@@ -80,7 +81,7 @@ GYM_STATUS_ENTITIES = (
 WORKOUT_ENTITIES = (
     GymGroupEntityDescription(key="last_workout_duration",
                               translation_key="last_workout_duration",
-                              path="data/checkIns.duration",
+                              path="checkIns.duration", index=-1,
                               unit_of_measurement=UnitOfTime.MINUTES,
                               icon="mdi:weight-lifter",
                               state_class=SensorStateClass.MEASUREMENT,
@@ -89,7 +90,16 @@ WORKOUT_ENTITIES = (
 
     GymGroupEntityDescription(key="workout_duration_this_week",
                               translation_key="workout_duration_this_week",
-                              path="weeklyTotal",
+                              path="weeklyTotal", index=0,
+                              unit_of_measurement=UnitOfTime.MINUTES,
+                              icon="mdi:weight-lifter",
+                              state_class=SensorStateClass.MEASUREMENT,
+                              # device_class=SensorDeviceClass.DURATION),
+                             ),
+
+    GymGroupEntityDescription(key="workout_duration_last_week",
+                              translation_key="workout_duration_last_week",
+                              path="weeklyTotal", index=-1,
                               unit_of_measurement=UnitOfTime.MINUTES,
                               icon="mdi:weight-lifter",
                               state_class=SensorStateClass.MEASUREMENT,
@@ -98,7 +108,16 @@ WORKOUT_ENTITIES = (
 
     GymGroupEntityDescription(key="workout_duration_this_month",
                               translation_key="workout_duration_this_month",
-                              path="monthlyTotal",
+                              path="monthlyTotal", index=0,
+                              unit_of_measurement=UnitOfTime.MINUTES,
+                              icon="mdi:weight-lifter",
+                              state_class=SensorStateClass.MEASUREMENT,
+                              # device_class=SensorDeviceClass.DURATION),
+                             ),
+
+    GymGroupEntityDescription(key="workout_duration_last_month",
+                              translation_key="workout_duration_last_month",
+                              path="monthlyTotal", index=-1,
                               unit_of_measurement=UnitOfTime.MINUTES,
                               icon="mdi:weight-lifter",
                               state_class=SensorStateClass.MEASUREMENT,
@@ -107,7 +126,15 @@ WORKOUT_ENTITIES = (
 
     GymGroupEntityDescription(key="workout_duration_this_year",
                               translation_key="workout_duration_this_year",
-                              path="yearlyTotal",
+                              path="yearlyTotal", index=0,
+                              unit_of_measurement=UnitOfTime.MINUTES,
+                              icon="mdi:weight-lifter",
+                              state_class=SensorStateClass.MEASUREMENT,
+                             ),
+
+    GymGroupEntityDescription(key="workout_duration_last_year",
+                              translation_key="workout_duration_last_year",
+                              path="yearlyTotal", index=-1,
                               unit_of_measurement=UnitOfTime.MINUTES,
                               icon="mdi:weight-lifter",
                               state_class=SensorStateClass.MEASUREMENT,
@@ -115,15 +142,30 @@ WORKOUT_ENTITIES = (
 
     GymGroupEntityDescription(key="workout_visits_this_month",
                               translation_key="workout_visits_this_month",
-                              path="monthlyVisitCount",
+                              path="monthlyVisitCount", index=0,
+                              icon="mdi:weight-lifter",
+                              state_class=SensorStateClass.MEASUREMENT,
+                             ),
+
+    GymGroupEntityDescription(key="workout_visits_last_month",
+                              translation_key="workout_visits_last_month",
+                              path="monthlyVisitCount", index=-1,
                               icon="mdi:weight-lifter",
                               state_class=SensorStateClass.MEASUREMENT,
                              ),
 
     GymGroupEntityDescription(key="workout_visits_this_year",
                               translation_key="workout_visits_this_year",
-                              path="yearlyVisitCount",
+                              path="yearlyVisitCount", index=0,
                               icon="mdi:weight-lifter",
                               state_class=SensorStateClass.MEASUREMENT,
                              ),
+
+    GymGroupEntityDescription(key="workout_visits_last_year",
+                              translation_key="workout_visits_last_year",
+                              path="yearlyVisitCount", index=-1,
+                              icon="mdi:weight-lifter",
+                              state_class=SensorStateClass.MEASUREMENT,
+                             ),
+
 )
