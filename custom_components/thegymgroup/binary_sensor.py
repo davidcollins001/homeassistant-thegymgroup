@@ -16,7 +16,7 @@ from .entity import GymGroupBaseEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-ON_STATES = ["open", "active"]
+ON_STATES = ["open", "active", "on"]
 
 
 async def async_setup_entry(

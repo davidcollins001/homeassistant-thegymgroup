@@ -70,6 +70,11 @@ GYM_STATUS_ENTITIES = (
                                     path="data/status",
                                     icon="mdi:store-clock",
                                     device_class=BinarySensorDeviceClass.DOOR),
+    GymGroupBinaryEntityDescription(key="gym_presence",
+                                    translation_key="gym_presence",
+                                    path="data/gymPresence",
+                                    icon="mdi:weight-lifter",
+                                    device_class=BinarySensorDeviceClass.OCCUPANCY),
 )
 
 WORKOUT_ENTITIES = (
@@ -121,5 +126,4 @@ WORKOUT_ENTITIES = (
                               icon="mdi:weight-lifter",
                               state_class=SensorStateClass.MEASUREMENT,
                              ),
-
 )
