@@ -141,22 +141,24 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
                                  # self.data.get("weeklyTotal", {}))
         # month_visits = totals.get("totals",
                                   # self.data.get("monthlyTotal", {}))
+        new_check_ins = visits.get("checkIns")
+        check_ins = self.data.get("checkIns", [])
         week_visits = self.data.get("weeklyTotal", {})
         month_visits = self.data.get("monthlyTotal", {})
         year_visits = self.data.get("yearlyTotal", {})
         month_visit_count = self.data.get("monthlyVisitCount", {})
         year_visit_count = self.data.get("yearlyVisitCount", {})
 
-        check_ins = visits.get("checkIns")
         # last "check in" is always shown, ignore if it's already been processed
         today = dt.datetime.combine(self.last_sync.date(), dt.time.min)
         # check in will be after sync time
         last_check_in = max(today, self.last_check_in)
         todays_check_ins = list(filter(lambda c: c['checkInDate'] > today,
-                                map(set_dt, check_ins)))
+                                map(set_dt, new_check_ins)))
         # check in date and duration = 0.0 means person is in the gym
         unseen_check_ins = list(filter(lambda c: c['checkInDate'] > last_check_in,
                                        todays_check_ins))
+        check_ins = list(unseen_check_ins) + check_ins
 
         gym_presence = "off"
         for check_in in unseen_check_ins:
@@ -182,7 +184,7 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
         _LOGGER.debug(f"Found {len(visits)} since {self.last_sync}")
 
         gym_data["gymPresence"] = gym_presence
-        gym_data["checkIns"] = todays_check_ins
+        gym_data["checkIns"] = check_ins
         gym_data["weeklyTotal"] = week_visits
         gym_data["monthlyTotal"] = month_visits
         gym_data["yearlyTotal"] = year_visits

@@ -97,8 +97,8 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
         ndx = None
         path = self.entity_description.path
         if path == "data/checkIns.duration":
-            # get value for today
-            if check_ins and check_ins[0]['checkInDate'] > today:
+            # get last check in value
+            if check_ins:
                 return check_ins[0]["duration"]
 
         elif path == "weeklyTotal":
