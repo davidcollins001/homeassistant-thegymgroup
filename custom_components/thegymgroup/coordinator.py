@@ -129,6 +129,8 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
 
             gym_data, visits = await asyncio.gather(gym_occupancy, gym_visit)
 
+        sync_dt = dt.datetime.now()
+
         # totals = self.data.get("totals", {})
         # week_visits = totals.get("weekly",
                                  # self.data.get("weeklyTotal", {}))
@@ -140,39 +142,36 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
         month_visit_count = self.data.get("monthlyVisitCount", {})
         year_visit_count = self.data.get("yearlyVisitCount", {})
 
-        check_ins = visits["checkIns"]
+        check_ins = visits.get("checkIns")
         # last "check in" is always shown, ignore if it's already been processed
-        if check_ins:
-            # ignore last check in time if it was before today
-            today = dt.datetime.combine(self.last_sync.date(), dt.time.min)
+        today = dt.datetime.combine(self.last_sync.date(), dt.time.min)
+        todays_check_ins = list(filter(lambda c: c['checkInDate'] > today,
+                                map(set_dt, check_ins)))
+        unseen_check_ins = list(filter(lambda c: c['checkInDate'] > self.last_sync,
+                                       todays_check_ins))
 
-            check_ins = list(filter(lambda c: c['checkInDate'] >= today,
-                                    map(set_dt, check_ins)))
+        for check_in in unseen_check_ins:
+            check_in_date = check_in['checkInDate']
 
-            for check_in in check_ins:
-                check_in_date = check_in['checkInDate']
-                if check_in_date < self.last_sync:
-                    break
+            cal = check_in_date.isocalendar()
+            wk_ndx = (cal.year, cal.week)
+            mnth_ndx = (check_in_date.year, check_in_date.month)
+            yr_ndx = check_in_date.year
+            duration = check_in['duration']
+            week_visits[wk_ndx] = week_visits.get(wk_ndx, 0) + duration
+            month_visits[mnth_ndx] = month_visits.get(mnth_ndx, 0) + duration
+            year_visits[yr_ndx] = year_visits.get(yr_ndx, 0) + duration
+            month_visit_count[mnth_ndx] = month_visit_count.get(mnth_ndx, 0) + 1
+            year_visit_count[yr_ndx] = year_visit_count.get(yr_ndx, 0) + 1
 
-                cal = check_in_date.isocalendar()
-                wk_ndx = (cal.year, cal.week)
-                mnth_ndx = (check_in_date.year, check_in_date.month)
-                yr_ndx = check_in_date.year
-                duration = check_in['duration']
-                week_visits[wk_ndx] = week_visits.get(wk_ndx, 0) + duration
-                month_visits[mnth_ndx] = month_visits.get(mnth_ndx, 0) + duration
-                year_visits[yr_ndx] = year_visits.get(yr_ndx, 0) + duration
-                month_visit_count[mnth_ndx] = month_visit_count.get(mnth_ndx, 0) + 1
-                year_visit_count[yr_ndx] = year_visit_count.get(yr_ndx, 0) + 1
+        _LOGGER.debug(f"Found {len(visits)} since {self.last_sync}")
 
-            _LOGGER.debug(f"Found {len(visits)} since {self.last_sync}")
-
-        gym_data["checkIns"] = check_ins
+        gym_data["checkIns"] = todays_check_ins
         gym_data["weeklyTotal"] = week_visits
         gym_data["monthlyTotal"] = month_visits
         gym_data["yearlyTotal"] = year_visits
         gym_data["monthlyVisitCount"] = month_visit_count
         gym_data["yearlyVisitCount"] = year_visit_count
 
-        self.last_sync = dt.datetime.now()
+        self.last_sync = sync_dt
         return gym_data
