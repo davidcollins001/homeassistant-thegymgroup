@@ -92,50 +92,28 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
     def native_value(self):
         """Return the state of the sensor."""
         check_ins =  self.coordinator.data.get("checkIns")
+        today = dt.datetime.combine(dt.date.today(), dt.time.min)
 
+        ndx = None
         path = self.entity_description.path
         if path == "data/checkIns.duration":
             if check_ins:
                 # get value for today
-                today = dt.datetime.combine(dt.date.today(), dt.time.min)
                 if check_ins[0]['checkInDate'] > today:
                     return check_ins[0]["duration"]
 
-        elif path == "data/weeklyTotal/thisWeek":
+        elif path == "weeklyTotal":
             cal = dt.date.today().isocalendar()
-            ndx = cal.year, cal.week
-            totals = self.coordinator.data.get("weeklyTotal")
-            if totals:
-                return totals.get(ndx, 0)
+            ndx = today.year, cal.week
 
-        elif path == "data/monthlyTotal/thisMonth":
-            today = dt.date.today()
+        elif path in ["monthlyTotal", "monthlyVisitCount"]:
             ndx = today.year, today.month
-            totals = self.coordinator.data.get("monthlyTotal")
-            if totals:
-                return totals.get(ndx, 0)
 
-        elif path == "data/yearlyTotal/thisYear":
-            today = dt.date.today()
-            totals = self.coordinator.data.get("yearlyTotal")
-            if totals:
-                return totals.get(today.year, 0)
-
-        elif path == "data/monthlyVisitCount":
-            today = dt.date.today()
-            ndx = today.year, today.month
-            totals = self.coordinator.data.get("monthlyVisitCount", 0)
-            if totals:
-                return totals.get(ndx, 0)
-
-        elif path == "data/yearlyVisitCount":
-            today = dt.date.today()
+        elif path in ["yearlyTotal", "yearlyVisitCount"]:
             ndx = today.year
-            totals = self.coordinator.data.get("yearlyVisitCount", 0)
-            if totals:
-                return totals.get(ndx, 0)
 
-        return 0
+        totals = self.coordinator.data.get(path, {})
+        return totals.get(ndx, 0)
 
     @property
     def extra_state_attributes(self):
