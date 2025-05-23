@@ -136,6 +136,9 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
                                   # self.data.get("monthlyTotal", {}))
         week_visits = self.data.get("weeklyTotal", {})
         month_visits = self.data.get("monthlyTotal", {})
+        year_visits = self.data.get("yearlyTotal", {})
+        month_visit_count = self.data.get("monthlyVisitCount", {})
+        year_visit_count = self.data.get("yearlyVisitCount", {})
 
         check_ins = visits["checkIns"]
         # last "check in" is always shown, ignore if it's already been processed
@@ -153,16 +156,23 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
 
                 cal = check_in_date.isocalendar()
                 wk_ndx = (cal.year, cal.week)
-                yr_ndx = (check_in_date.year, check_in_date.month)
+                mnth_ndx = (check_in_date.year, check_in_date.month)
+                yr_ndx = check_in_date.year
                 duration = check_in['duration']
                 week_visits[wk_ndx] = week_visits.get(wk_ndx, 0) + duration
-                month_visits[yr_ndx] = month_visits.get(yr_ndx, 0) + duration
+                month_visits[mnth_ndx] = month_visits.get(mnth_ndx, 0) + duration
+                year_visits[yr_ndx] = year_visits.get(yr_ndx, 0) + duration
+                month_visit_count[mnth_ndx] = month_visit_count.get(mnth_ndx, 0) + 1
+                year_visit_count[yr_ndx] = year_visit_count.get(yr_ndx, 0) + 1
 
             _LOGGER.debug(f"Found {len(visits)} since {self.last_sync}")
 
         gym_data["checkIns"] = check_ins
         gym_data["weeklyTotal"] = week_visits
         gym_data["monthlyTotal"] = month_visits
+        gym_data["yearlyTotal"] = year_visits
+        gym_data["monthlyVisitCount"] = month_visit_count
+        gym_data["yearlyVisitCount"] = year_visit_count
 
         self.last_sync = dt.datetime.now()
         return gym_data

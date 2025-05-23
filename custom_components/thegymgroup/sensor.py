@@ -115,6 +115,26 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
             if totals:
                 return totals.get(ndx, 0)
 
+        elif path == "data/yearlyTotal/thisYear":
+            today = dt.date.today()
+            totals = self.coordinator.data.get("yearlyTotal")
+            if totals:
+                return totals.get(today.year, 0)
+
+        elif path == "data/monthlyVisitCount":
+            today = dt.date.today()
+            ndx = today.year, today.month
+            totals = self.coordinator.data.get("monthlyVisitCount", 0)
+            if totals:
+                return totals.get(ndx, 0)
+
+        elif path == "data/yearlyVisitCount":
+            today = dt.date.today()
+            ndx = today.year
+            totals = self.coordinator.data.get("yearlyVisitCount", 0)
+            if totals:
+                return totals.get(ndx, 0)
+
         return 0
 
     @property

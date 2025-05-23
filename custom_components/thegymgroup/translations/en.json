@@ -49,6 +49,15 @@
           },
           "workout_duration_this_month": {
             "name": "Workout Duration This Month"
+          },
+          "workout_duration_this_year": {
+            "name": "Workout Duration This Year"
+          },
+          "workout_visits_this_month": {
+            "name": "Workout Visits This Month"
+          },
+          "workout_visits_this_year": {
+            "name": "Workout Visits This Year"
           }
         }
     }

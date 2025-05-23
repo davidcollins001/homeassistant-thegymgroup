@@ -100,4 +100,26 @@ WORKOUT_ENTITIES = (
                               # device_class=SensorDeviceClass.DURATION),
                              ),
 
+    GymGroupEntityDescription(key="workout_duration_this_year",
+                              translation_key="workout_duration_this_year",
+                              path="data/yearlyTotal/thisYear",
+                              unit_of_measurement=UnitOfTime.MINUTES,
+                              icon="mdi:weight-lifter",
+                              state_class=SensorStateClass.MEASUREMENT,
+                             ),
+
+    GymGroupEntityDescription(key="workout_visits_this_month",
+                              translation_key="workout_visits_this_month",
+                              path="data/monthlyVisitCount",
+                              icon="mdi:weight-lifter",
+                              state_class=SensorStateClass.MEASUREMENT,
+                             ),
+
+    GymGroupEntityDescription(key="workout_visits_this_year",
+                              translation_key="workout_visits_this_year",
+                              path="data/yearlyVisitCount",
+                              icon="mdi:weight-lifter",
+                              state_class=SensorStateClass.MEASUREMENT,
+                             ),
+
 )
