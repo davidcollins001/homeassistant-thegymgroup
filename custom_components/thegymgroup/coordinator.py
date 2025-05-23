@@ -130,6 +130,9 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
 
             gym_data, visits = await asyncio.gather(gym_occupancy, gym_visit)
 
+        return self.build_visit_data(gym_data, visits)
+
+    def build_visit_data(self, gym_data, visits):
         sync_dt = dt.datetime.now()
 
         # totals = self.data.get("totals", {})
