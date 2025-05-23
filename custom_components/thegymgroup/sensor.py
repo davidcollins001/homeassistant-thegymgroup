@@ -22,6 +22,7 @@ from .entity import GymGroupBaseEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+CHECK_IN_NDX = -1
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities
@@ -99,7 +100,7 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
         if path == "data/checkIns.duration":
             # get last check in value
             if check_ins:
-                return check_ins[0]["duration"]
+                return check_ins[CHECK_IN_NDX]["duration"]
 
         elif path == "weeklyTotal":
             cal = dt.date.today().isocalendar()
@@ -112,7 +113,7 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
             ndx = today.year
 
         totals = self.coordinator.data.get(path, {})
-        return totals.get(ndx, 0)
+        return totals.get(ndx, CHECK_IN_NDX)
 
     @property
     def extra_state_attributes(self):
@@ -124,8 +125,8 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
         check_ins =  self.coordinator.data.get("checkIns")
         if check_ins:
             attributes.update({
-                "check_in": check_ins[0]["checkInDate"],
-                "location": check_ins[0]["gymLocationName"],
+                "check_in": check_ins[CHECK_IN_NDX]["checkInDate"],
+                "location": check_ins[CHECK_IN_NDX]["gymLocationName"],
             })
 
         return attributes
