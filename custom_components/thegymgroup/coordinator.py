@@ -37,6 +37,7 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
         """Initialise a custom coordinator."""
         self.entry = entry
         self.last_sync = dt.datetime(1970, 1, 1)
+        self.last_checkin = dt.datetime(1970, 1, 1)
 
         super().__init__(hass, _LOGGER, name=DOMAIN,
                          update_interval=poll_interval,
@@ -145,13 +146,18 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
         check_ins = visits.get("checkIns")
         # last "check in" is always shown, ignore if it's already been processed
         today = dt.datetime.combine(self.last_sync.date(), dt.time.min)
+        last_checkin = max(today, self.last_checkin)
         todays_check_ins = list(filter(lambda c: c['checkInDate'] > today,
                                 map(set_dt, check_ins)))
-        unseen_check_ins = list(filter(lambda c: c['checkInDate'] > self.last_sync,
-                                       todays_check_ins))
+        # check in date and duration = 0.0 means person is in the gym
+        unseen_check_ins = list(filter(
+            lambda c: c['checkInDate'] > last_checkin and c['duration'] > 0,
+            todays_check_ins
+        ))
 
         for check_in in unseen_check_ins:
             check_in_date = check_in['checkInDate']
+            self.last_checkin = check_in_date
 
             cal = check_in_date.isocalendar()
             wk_ndx = (cal.year, cal.week)
