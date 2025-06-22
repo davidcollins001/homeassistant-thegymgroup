@@ -113,7 +113,7 @@ class GymGroupVisitSensor(GymGroupMemberSensor):
             }
             index = duration_indexes[path]
             totals = self.coordinator.data.get(path, [None])
-            return totals[index]
+            return totals.get(index)
 
     @property
     def extra_state_attributes(self):

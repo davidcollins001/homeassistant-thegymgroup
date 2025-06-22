@@ -53,7 +53,6 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
             "host": "thegymgroup.netpulse.com",
             "user-agent": "okhttp/3.12.3",
             "x-np-api-version": "1.5",
-            "x-np-app-version": "6.0.1",
             "x-np-user-agent": ("clientType=MOBILE_DEVICE; devicePlatform=ANDROID; "
                                 "deviceUid=; "
                                 "applicationName=The Gym Group; "
@@ -63,7 +62,7 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
 
         # async_track_time_change(hass, self._async_reset, hour=23, minute=58, second=0)
 
-    async def async_login(self):
+    async def async_login(self, attempt=0):
         headers = {**self.headers,
                    "content-length": "56",
                    "content-type": "application/x-www-form-urlencoded"}
@@ -79,8 +78,13 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
                     _LOGGER.error(msg)
                     raise ConfigEntryAuthFailed(msg)
 
-                cookie = resp.headers["Set-Cookie"]
-                data = await resp.json()
+                try:
+                    cookie = resp.headers.get("Set-Cookie")
+                    data = await resp.json()
+                except Exception as e:
+                    _LOGGER.critical(f"login failed: {resp.status} {e}")
+                    await asyncio.sleep(2 ** attempt)
+                    await self.async_login(attempt + 1)
 
         self.headers["cookie"] = cookie
         self.profile = data
@@ -98,8 +102,8 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
             if response.status != 200:
                 err = await response.text()
                 _LOGGER.error(f"failed for {url}: {response.status}: {err}")
-                self.async_login()
-                return self.fetch(url, session)
+                await self.async_login()
+                return await self.fetch(url, session)
 
             return await response.json()
 
