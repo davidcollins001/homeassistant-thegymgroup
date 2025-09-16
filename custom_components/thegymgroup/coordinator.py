@@ -83,8 +83,8 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
                     data = await resp.json()
                 except Exception as e:
                     _LOGGER.critical(f"login failed: {resp.status} {e}")
-                    await asyncio.sleep(2 ** attempt)
-                    await self.async_login(attempt + 1)
+                    await asyncio.sleep(attempt)
+                    await self.async_login(2 ** attempt)
 
         self.headers["cookie"] = cookie
         self.profile = data
@@ -96,14 +96,15 @@ class TheGymGroupCoordinator(DataUpdateCoordinator):
         self.data.pop("checkIns", None)
         self.hass.bus.fire(f"{self.name}_{EVENT_RESET}")
 
-    async def fetch(self, url, session):
+    async def fetch(self, url, session, attempt=0):
         async with session.get(f"{self.base_url}/{url}", headers=self.headers) \
                 as response:
             if response.status != 200:
                 err = await response.text()
                 _LOGGER.error(f"failed for {url}: {response.status}: {err}")
+                await asyncio.sleep(attempt)
                 await self.async_login()
-                return await self.fetch(url, session)
+                return await self.fetch(url, session, 2 ** attempt)
 
             return await response.json()
 
